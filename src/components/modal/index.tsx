@@ -3,11 +3,7 @@ import { formatLocalDateTime } from './formatLocalTime';
 import './modal.css';
 
 const SUMMARY_OPTIONS: SummaryOption[] = [
-	{
-		label: 'Quote (30 mins)',
-		value: 'Quote (30 mins)',
-		durationMinutes: 30,
-	},
+	{ label: 'Quote (30 mins)', value: 'Quote (30 mins)', durationMinutes: 30 },
 	{
 		label: 'Minor Job (2 hours)',
 		value: 'Minor Job (2 hours)',
@@ -20,53 +16,75 @@ const SUMMARY_OPTIONS: SummaryOption[] = [
 	},
 ];
 
+const initialFormState = {
+	summary: SUMMARY_OPTIONS[0].value,
+	description: '',
+	location: '',
+	start: '',
+	end: '',
+};
+
 const Modal: React.FC<ModalProps> = ({
 	isOpen,
 	onClose,
 	onSubmit,
 	defaultDate,
 }) => {
-	const [formData, setFormData] = useState<EventData>({
-		summary: SUMMARY_OPTIONS[0].value,
-		description: '',
-		location: '',
-		start: '',
-		end: '',
-	});
+	const [formData, setFormData] = useState<EventData>(initialFormState);
+	const [show, setShow] = useState(false);
+	const [closing, setClosing] = useState(false);
 
+	// handle mount/unmount timing
+	useEffect(() => {
+		if (isOpen) {
+			setShow(true);
+			setClosing(false);
+		} else if (show) {
+			setClosing(true);
+			const timer = setTimeout(() => {
+				setShow(false);
+				setClosing(false);
+			}, 200); // match CSS transition time
+			return () => clearTimeout(timer);
+		}
+	}, [isOpen, show]);
+
+	// prefill times
 	useEffect(() => {
 		if (defaultDate) {
-			const defaultDuration = SUMMARY_OPTIONS[0].durationMinutes;
-			const startLocal = formatLocalDateTime(defaultDate);
-			const endLocal = formatLocalDateTime(
-				new Date(defaultDate.getTime() + defaultDuration * 60 * 1000),
-			); // +30 / 120 / 480 min
-			setFormData((prev) => ({
-				...prev,
-				start: startLocal,
-				end: endLocal,
-			}));
+			const duration = SUMMARY_OPTIONS[0].durationMinutes;
+			const start = formatLocalDateTime(defaultDate);
+			const end = formatLocalDateTime(
+				new Date(defaultDate.getTime() + duration * 60 * 1000),
+			);
+			setFormData((prev) => ({ ...prev, start, end }));
 		}
 	}, [defaultDate]);
 
+	// update end when job type changes
 	useEffect(() => {
 		if (!formData.start) return;
-
-		const selectedOption = SUMMARY_OPTIONS.find(
-			(option) => option.value === formData.summary,
-		);
-		const duration = selectedOption?.durationMinutes ?? 30;
-
+		const selected = SUMMARY_OPTIONS.find((o) => o.value === formData.summary);
+		const duration = selected?.durationMinutes ?? 30;
 		const startDate = new Date(formData.start);
-		const newEndDate = new Date(startDate.getTime() + duration * 60 * 1000);
-
-		setFormData((prev) => ({
-			...prev,
-			end: formatLocalDateTime(newEndDate),
-		}));
+		const endDate = new Date(startDate.getTime() + duration * 60 * 1000);
+		setFormData((prev) => ({ ...prev, end: formatLocalDateTime(endDate) }));
 	}, [formData.summary, formData.start]);
 
-	if (!isOpen) return null;
+	// escape key
+	useEffect(() => {
+		if (!isOpen) return;
+		const handleKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				setFormData(initialFormState);
+				onClose();
+			}
+		};
+		window.addEventListener('keydown', handleKey);
+		return () => window.removeEventListener('keydown', handleKey);
+	}, [isOpen, onClose]);
+
+	if (!show) return null;
 
 	const handleChange = (e: React.ChangeEvent<FormFilling>) => {
 		const { name, value } = e.target;
@@ -76,12 +94,23 @@ const Modal: React.FC<ModalProps> = ({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		onSubmit(formData);
+		handleCancel();
+	};
+
+	const handleCancel = () => {
+		setFormData(initialFormState);
 		onClose();
 	};
 
 	return (
-		<div className='modal-overlay' onClick={onClose}>
-			<div className='modal-container' onClick={(e) => e.stopPropagation()}>
+		<div
+			className={`modal-overlay ${isOpen && !closing ? 'open' : 'closing'}`}
+			onClick={handleCancel}
+		>
+			<div
+				className={`modal-container ${isOpen && !closing ? 'open' : 'closing'}`}
+				onClick={(e) => e.stopPropagation()}
+			>
 				<h2>Create New Event</h2>
 				<form onSubmit={handleSubmit}>
 					<label>
@@ -91,9 +120,9 @@ const Modal: React.FC<ModalProps> = ({
 							value={formData.summary}
 							onChange={handleChange}
 						>
-							{SUMMARY_OPTIONS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
+							{SUMMARY_OPTIONS.map((o) => (
+								<option key={o.value} value={o.value}>
+									{o.label}
 								</option>
 							))}
 						</select>
@@ -146,7 +175,7 @@ const Modal: React.FC<ModalProps> = ({
 
 					<div className='modal-buttons'>
 						<button type='submit'>Add Event</button>
-						<button type='button' onClick={onClose}>
+						<button type='button' onClick={handleCancel}>
 							Cancel
 						</button>
 					</div>

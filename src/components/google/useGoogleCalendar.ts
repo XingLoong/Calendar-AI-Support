@@ -1,29 +1,48 @@
-const CALENDAR_ID = 'primary'; // or your custom calendar ID
+const CALENDAR_ID = 'primary';
 const API_BASE = import.meta.env.VITE_GOOGLE_API_BASE_URL;
 
-export async function fetchEvents(accessToken: string) {
-	if (!accessToken) throw new Error('Missing access token');
-
-	const response = await fetch(
-		`${API_BASE}/calendars/${encodeURIComponent(
-			CALENDAR_ID,
-		)}/events?singleEvents=true&orderBy=startTime`,
-		{
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'application/json',
+export async function fetchEvents(
+	accessToken: string,
+	onInvalidToken?: () => void,
+): Promise<CalendarEvent[]> {
+	try {
+		const response = await fetch(
+			`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
+				CALENDAR_ID,
+			)}/events?maxResults=50&orderBy=startTime&singleEvents=true`,
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
 			},
-		},
-	);
+		);
 
-	if (!response.ok) {
-		const error = await response.json().catch(() => ({}));
-		console.error('Error fetching events:', error);
-		throw new Error(error.error?.message || 'Failed to fetch events');
+		if (response.status === 401 || response.status === 403) {
+			console.warn('Access token invalid or expired. Logging out...');
+			onInvalidToken?.(); // triggers logout callback
+			return [];
+		}
+
+		if (!response.ok) {
+			console.error('Failed to fetch calendar events:', response.statusText);
+			return [];
+		}
+
+		const data = await response.json();
+
+		if (!Array.isArray(data.items)) {
+			console.warn(
+				'Unexpected response format from Google Calendar API:',
+				data,
+			);
+			return [];
+		}
+
+		return data.items as CalendarEvent[];
+	} catch (err) {
+		console.error('Error fetching calendar events:', err);
+		return [];
 	}
-
-	const data = await response.json();
-	return data.items || [];
 }
 
 export async function createEvent(
@@ -64,6 +83,10 @@ export async function createEvent(
 		},
 	);
 
+	if (response.status === 401 || response.status === 403) {
+		throw new Error('Access token invalid or expired');
+	}
+
 	if (!response.ok) {
 		const error = await response.json().catch(() => ({}));
 		console.error('Error creating event:', error);
@@ -73,7 +96,10 @@ export async function createEvent(
 	return response.json();
 }
 
-export async function deleteEvent(accessToken: string, eventId: string) {
+export async function deleteEvent(
+	accessToken: string,
+	eventId: string,
+): Promise<boolean> {
 	if (!accessToken) throw new Error('Missing access token');
 
 	const response = await fetch(
@@ -87,6 +113,10 @@ export async function deleteEvent(accessToken: string, eventId: string) {
 			},
 		},
 	);
+
+	if (response.status === 401 || response.status === 403) {
+		throw new Error('Access token invalid or expired');
+	}
 
 	if (!response.ok) {
 		const error = await response.json().catch(() => ({}));

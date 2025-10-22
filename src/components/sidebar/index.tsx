@@ -4,14 +4,13 @@ import { fetchEvents } from '../google/useGoogleCalendar';
 import robo from '../../assets/ai-white.svg';
 import './sidebar.css';
 
-const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
+const FloatingSidebar: React.FC<{ accessToken: string }> = ({
 	accessToken,
-}: {
-	accessToken: string;
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [events, setEvents] = useState<CalendarEvent[]>([]);
 
+	// Fetch events when access token changes
 	useEffect(() => {
 		const loadEvents = async () => {
 			try {
@@ -25,26 +24,40 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
 		if (accessToken) loadEvents();
 	}, [accessToken]);
 
+	// Restore sidebar open state on reload
+	useEffect(() => {
+		const savedOpen = localStorage.getItem('sidebar-open');
+		if (savedOpen === 'true') setIsOpen(true);
+	}, []);
+
+	// Persist sidebar state
+	useEffect(() => {
+		localStorage.setItem('sidebar-open', String(isOpen));
+	}, [isOpen]);
+
 	return (
 		<>
-			<button className='floating-button' onClick={() => setIsOpen(true)}>
-				<img
-					src={robo}
-					alt='AI icon'
-					style={{
-						width: '90px',
-						height: '90px',
-						marginLeft: '-10px',
-						marginTop: '-5px',
-					}}
-				/>{' '}
-			</button>
+			{!isOpen && (
+				<button className='floating-button' onClick={() => setIsOpen(true)}>
+					<img
+						src={robo}
+						alt='AI icon'
+						style={{
+							width: '90px',
+							height: '90px',
+							marginLeft: '-10px',
+							marginTop: '-5px',
+						}}
+					/>
+				</button>
+			)}
 
 			{isOpen && (
-				<>
-					<div className='overlay' onClick={() => setIsOpen(false)} />
-
-					<div className={`sidebar ${isOpen ? 'open' : ''}`}>
+				<div className='overlay'>
+					<div
+						className={`sidebar ${isOpen ? 'open' : ''}`}
+						onClick={(event) => event.stopPropagation()}
+					>
 						<div className='sidebar-header'>
 							<h2>AI auto-helper</h2>
 							<button
@@ -60,10 +73,12 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
 							<p className='mb-3 text-sm text-gray-600'>
 								What would you like help with today?
 							</p>
+
+							{/* Removed key={accessToken} so AI memory persists across refreshes */}
 							<AIAssistant events={events} />
 						</div>
 					</div>
-				</>
+				</div>
 			)}
 		</>
 	);

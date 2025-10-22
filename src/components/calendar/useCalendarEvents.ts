@@ -56,7 +56,7 @@ export const useCalendarEvents = (
 				setIsModalOpen(false);
 			}
 		},
-		[accessToken],
+		[accessToken, onCalendarRefresh],
 	);
 
 	return {

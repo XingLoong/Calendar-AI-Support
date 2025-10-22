@@ -85,4 +85,14 @@ interface GeminiResponse {
 	output_text?: string;
 }
 
+interface Message {
+	role: 'user' | 'assistant';
+	content: string;
+}
+
+interface ChatMessagesProps {
+	messages: Message[];
+	loading?: boolean;
+}
+
 type FormFilling = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

@@ -3,13 +3,20 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import googleCalendarPlugin from '@fullcalendar/google-calendar';
+import type { DatesSetArg } from '@fullcalendar/core';
 import Modal from '../modal';
 import { useCalendarEvents } from './useCalendarEvents';
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 export default function Calendar({ accessToken }: { accessToken: string }) {
-	const calendarRef = useRef(null);
+	const calendarRef = useRef<FullCalendar | null>(null);
 	const [calendarKey, setCalendarKey] = useState(0);
+	const [calendarView, setCalendarView] = useState(
+		localStorage.getItem('calendarView') || 'dayGridMonth',
+	);
+	const [calendarDate, setCalendarDate] = useState<string | undefined>(
+		localStorage.getItem('calendarDate') || undefined,
+	);
 
 	const handleCalendarRefresh = useCallback(() => {
 		setCalendarKey((prev) => prev + 1);
@@ -24,23 +31,38 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 		loading,
 	} = useCalendarEvents(accessToken, handleCalendarRefresh);
 
+	// ✅ Save view + date every time the view changes
+	const handleViewChange = (viewInfo: DatesSetArg) => {
+		const viewType = viewInfo.view.type;
+		const startDate = viewInfo.startStr;
+
+		setCalendarView(viewType);
+		setCalendarDate(startDate);
+		localStorage.setItem('calendarView', viewType);
+		localStorage.setItem('calendarDate', startDate);
+	};
+
+	// Auto-refresh events periodically
 	useEffect(() => {
 		const interval = setInterval(() => {
 			console.log('5 min auto-refresh');
 			setCalendarKey((prev) => prev + 1);
-		}, 5 * 60 * 1000); // 5mins? 10?
+		}, 5 * 60 * 1000);
 		return () => clearInterval(interval);
 	}, []);
 
 	return (
 		<div className='calendar-app' style={{ width: 800 }}>
 			{loading && <p>Loading calendar events...</p>}
+
 			<FullCalendar
+				key={calendarKey}
+				ref={calendarRef}
 				plugins={[
 					dayGridPlugin,
 					timeGridPlugin,
-					googleCalendarPlugin,
 					interactionPlugin,
+					googleCalendarPlugin,
 				]}
 				googleCalendarApiKey={import.meta.env.VITE_GOOGLE_API}
 				headerToolbar={{
@@ -48,14 +70,12 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 					center: 'title',
 					right: 'dayGridMonth,timeGridWeek,timeGridDay',
 				}}
-				key={calendarKey}
-				ref={calendarRef}
-				initialView='dayGridMonth'
-				weekends={true} // toggle option?
+				initialView={calendarView}
+				initialDate={calendarDate}
+				datesSet={handleViewChange}
+				weekends={true}
 				eventSources={[
-					{
-						googleCalendarId: import.meta.env.VITE_GOOGLE_CALENDAR_ID, //dedicated Calendar/user?
-					},
+					{ googleCalendarId: import.meta.env.VITE_GOOGLE_CALENDAR_ID },
 					{
 						googleCalendarId:
 							'en.australian#holiday@group.v.calendar.google.com',
@@ -66,7 +86,6 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 				dayMaxEvents={true}
 				moreLinkClick='popover'
 				businessHours={[
-					//adjust based on state laws
 					{
 						daysOfWeek: [1, 2, 3, 4, 5],
 						startTime: '07:30',
@@ -91,14 +110,12 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 					arg.jsEvent.preventDefault();
 				}}
 				dateClick={(event) => {
-					if (event.view.type === 'dayGridMonth') {
-						return;
-					}
 					if (event.view.type === 'timeGridWeek') {
 						handleDateClick(event);
 					}
 				}}
 			/>
+
 			<Modal
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
