@@ -5,11 +5,15 @@ import interactionPlugin from '@fullcalendar/interaction';
 import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import Modal from '../modal';
 import { useCalendarEvents } from './useCalendarEvents';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 export default function Calendar({ accessToken }: { accessToken: string }) {
 	const calendarRef = useRef(null);
 	const [calendarKey, setCalendarKey] = useState(0);
+
+	const handleCalendarRefresh = useCallback(() => {
+		setCalendarKey((prev) => prev + 1);
+	}, []);
 
 	const {
 		isModalOpen,
@@ -18,13 +22,13 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 		handleDateClick,
 		handleAddEvent,
 		loading,
-	} = useCalendarEvents(accessToken);
+	} = useCalendarEvents(accessToken, handleCalendarRefresh);
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			console.log('Remounting calendar to refresh events...');
+			console.log('5 min auto-refresh');
 			setCalendarKey((prev) => prev + 1);
-		}, 60 * 1000);
+		}, 5 * 60 * 1000); // 5mins? 10?
 		return () => clearInterval(interval);
 	}, []);
 
@@ -61,15 +65,24 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 				height={800}
 				dayMaxEvents={true}
 				moreLinkClick='popover'
-				businessHours={{
-					daysOfWeek: [1, 2, 3, 4, 5, 6],
-					startTime: '07:30',
-					endTime: '18:00',
-				}}
+				businessHours={[
+					//adjust based on state laws
+					{
+						daysOfWeek: [1, 2, 3, 4, 5],
+						startTime: '07:30',
+						endTime: '18:00',
+					},
+					{
+						daysOfWeek: [6],
+						startTime: '08:00',
+						endTime: '17:00',
+					},
+				]}
+				timeZone='local'
 				eventTimeFormat={{
 					hour: '2-digit',
 					minute: '2-digit',
-					meridiem: false,
+					hour12: false,
 				}}
 				slotMinTime='06:00:00'
 				slotMaxTime='20:00:00'

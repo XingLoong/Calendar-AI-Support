@@ -16,6 +16,7 @@
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
+    "@google/genai": "^1.26.0",
     "@googleapis/calendar": "^12.0.0",
     "@googleapis/docs": "^8.1.0",
     "@react-oauth/google": "^0.12.2",

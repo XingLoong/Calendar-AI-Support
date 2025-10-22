@@ -69,12 +69,20 @@ interface SummaryOption {
 	durationMinutes: number;
 }
 
-interface EventFormData {
-	summary: string;
-	description: string;
-	location: string;
-	start: string;
-	end: string;
+interface FloatingSidebarProps {
+	accessToken: string;
+}
+
+interface GeminiResponse {
+	text?: string | (() => Promise<string> | string);
+	candidates?: Array<{
+		content?: { parts?: Array<{ text?: string }> };
+		text?: string;
+	}>;
+	output?: Array<{
+		content?: { parts?: Array<{ text?: string }> };
+	}>;
+	output_text?: string;
 }
 
 type FormFilling = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

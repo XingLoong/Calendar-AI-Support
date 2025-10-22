@@ -2,6 +2,8 @@ import './App.css';
 import Calendar from './components/calendar';
 import GoogleLoginButton from './components/Auth/GoogleLoginButton';
 import { useState } from 'react';
+import FloatingSidebar from './components/sidebar';
+import ConsoleSilencer from './components/utils/ConsoleSilencer';
 
 function App() {
 	const [accesstoken, setAccessToken] = useState<string | null>(null);
@@ -12,6 +14,7 @@ function App() {
 
 	return (
 		<div>
+			<ConsoleSilencer />
 			<h1>AI Calendar App</h1>
 
 			{!accesstoken ? (
@@ -21,7 +24,10 @@ function App() {
 					onLoginSuccess={handleLoginSuccess}
 				/>
 			) : (
-				<Calendar accessToken={accesstoken} />
+				<>
+					<Calendar accessToken={accesstoken} />
+					<FloatingSidebar accessToken={accesstoken} />
+				</>
 			)}
 		</div>
 	);

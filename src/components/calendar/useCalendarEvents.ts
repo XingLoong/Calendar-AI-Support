@@ -2,7 +2,10 @@ import type { DateClickArg } from '@fullcalendar/interaction';
 import { useState, useCallback } from 'react';
 import { createEvent } from '../google/useGoogleCalendar';
 
-export const useCalendarEvents = (accessToken: string | null) => {
+export const useCalendarEvents = (
+	accessToken: string | null,
+	onCalendarRefresh: () => void,
+) => {
 	const [selectedDateTime, setSelectedDateTime] = useState<Date>();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -41,6 +44,7 @@ export const useCalendarEvents = (accessToken: string | null) => {
 			try {
 				setLoading(true);
 				await createEvent(accessToken, data);
+				onCalendarRefresh();
 				// alert?
 			} catch (error) {
 				console.error('Failed to add event to Google Calendar:', error);

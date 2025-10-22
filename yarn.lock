@@ -392,6 +392,14 @@
   dependencies:
     "@fullcalendar/daygrid" "~6.1.19"
 
+"@google/genai@^1.26.0":
+  version "1.26.0"
+  resolved "https://registry.yarnpkg.com/@google/genai/-/genai-1.26.0.tgz#baa4119f1098452853484620f1456cef7a00aadb"
+  integrity sha512-cy5y9RgN4jBK8zr+ePgZd0To1HDpzpjIgSM6aRCZnvYR+JupGtgc1SkkOCCi1MNZho7/MuKKdnQTLhhP8OQNvg==
+  dependencies:
+    google-auth-library "^10.3.0"
+    ws "^8.18.0"
+
 "@googleapis/calendar@^12.0.0":
   version "12.0.0"
   resolved "https://registry.yarnpkg.com/@googleapis/calendar/-/calendar-12.0.0.tgz#d2d730c3157394b079ae9945293091b2c87c5ea1"
@@ -1336,7 +1344,7 @@ globals@^16.4.0:
   resolved "https://registry.yarnpkg.com/globals/-/globals-16.4.0.tgz#574bc7e72993d40cf27cf6c241f324ee77808e51"
   integrity sha512-ob/2LcVVaVGCYN+r14cnwnoDPUufjiYgSqRhiFD0Q1iI4Odora5RE8Iv1D24hAz5oMophRGkGz+yuvQmmUMnMw==
 
-google-auth-library@^10.1.0:
+google-auth-library@^10.1.0, google-auth-library@^10.3.0:
   version "10.4.1"
   resolved "https://registry.yarnpkg.com/google-auth-library/-/google-auth-library-10.4.1.tgz#7fbf696b72ce5a6ab6fc390646bea02edc612077"
   integrity sha512-VlvZ+QDWng3aPh++0BSQlSJyjn4qgLLTmqylAR3as0dr6YwPkZpHcZAngAFr68TDVCUSQVRTkV73K/D3m7vEIg==
@@ -1969,6 +1977,11 @@ word-wrap@^1.2.5:
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.5.tgz#d2c45c6dd4fbce621a66f136cbe328afd0410b34"
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
+
+ws@^8.18.0:
+  version "8.18.3"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.3.tgz#b56b88abffde62791c639170400c93dcb0c95472"
+  integrity sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==
 
 yallist@^3.0.2:
   version "3.1.1"
