@@ -45,6 +45,7 @@ function App() {
 				<>
 					<Calendar accessToken={accessToken} />
 					<FloatingSidebar accessToken={accessToken} />
+					<br />
 					<button
 						onClick={handleLogout}
 						className='absolute top-4 right-4 bg-gray-700 text-white px-3 py-1 rounded-md hover:bg-gray-800'
