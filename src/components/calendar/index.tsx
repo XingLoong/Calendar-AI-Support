@@ -5,8 +5,12 @@ import interactionPlugin from '@fullcalendar/interaction';
 import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import Modal from '../modal';
 import { useCalendarEvents } from './useCalendarEvents';
+import { useRef, useState, useEffect } from 'react';
 
 export default function Calendar({ accessToken }: { accessToken: string }) {
+	const calendarRef = useRef(null);
+	const [calendarKey, setCalendarKey] = useState(0);
+
 	const {
 		isModalOpen,
 		setIsModalOpen,
@@ -15,6 +19,14 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 		handleAddEvent,
 		loading,
 	} = useCalendarEvents(accessToken);
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			console.log('Remounting calendar to refresh events...');
+			setCalendarKey((prev) => prev + 1);
+		}, 60 * 1000);
+		return () => clearInterval(interval);
+	}, []);
 
 	return (
 		<div className='calendar-app' style={{ width: 800 }}>
@@ -32,6 +44,8 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 					center: 'title',
 					right: 'dayGridMonth,timeGridWeek,timeGridDay',
 				}}
+				key={calendarKey}
+				ref={calendarRef}
 				initialView='dayGridMonth'
 				weekends={true} // toggle option?
 				eventSources={[
@@ -43,11 +57,6 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 							'en.australian#holiday@group.v.calendar.google.com',
 					},
 				]}
-				eventTimeFormat={{
-					hour: '2-digit',
-					minute: '2-digit',
-					meridiem: false,
-				}}
 				handleWindowResize={false}
 				height={800}
 				dayMaxEvents={true}
@@ -57,13 +66,17 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 					startTime: '07:30',
 					endTime: '18:00',
 				}}
+				eventTimeFormat={{
+					hour: '2-digit',
+					minute: '2-digit',
+					meridiem: false,
+				}}
 				slotMinTime='06:00:00'
 				slotMaxTime='20:00:00'
 				eventClick={(arg) => {
 					window.open(arg.event.url, '_blank', 'width=700,height=600');
 					arg.jsEvent.preventDefault();
 				}}
-				// dateClick={handleDateClick}
 				dateClick={(event) => {
 					if (event.view.type === 'dayGridMonth') {
 						return;
@@ -72,12 +85,6 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 						handleDateClick(event);
 					}
 				}}
-				// dateClick={(event) => {
-				//     if () {}
-				// }}
-				// info.view.type === 'dayGridMonth' ? 'timeGridWeek' : do nothing
-				//     dateClick: function(info) {
-				//          console.log(info)}
 			/>
 			<Modal
 				isOpen={isModalOpen}

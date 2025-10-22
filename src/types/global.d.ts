@@ -69,4 +69,12 @@ interface SummaryOption {
 	durationMinutes: number;
 }
 
+interface EventFormData {
+	summary: string;
+	description: string;
+	location: string;
+	start: string;
+	end: string;
+}
+
 type FormFilling = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

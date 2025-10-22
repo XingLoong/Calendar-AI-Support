@@ -26,7 +26,7 @@ const Modal: React.FC<ModalProps> = ({
 	onSubmit,
 	defaultDate,
 }) => {
-	const [formData, setFormData] = useState<CalendarEventInput>({
+	const [formData, setFormData] = useState<EventData>({
 		summary: SUMMARY_OPTIONS[0].value,
 		description: '',
 		location: '',
