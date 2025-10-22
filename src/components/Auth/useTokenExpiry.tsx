@@ -72,7 +72,7 @@ export function useTokenExpiry({
 		});
 
 		// silent = no user interaction
-		client.requestAccessToken({ prompt: '' });
+		client.requestAccessToken();
 	}, [clientId, scope, onRefresh, onLogout]);
 
 	// Expiry timer
