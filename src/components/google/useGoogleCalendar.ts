@@ -1,4 +1,4 @@
-const CALENDAR_ID = 'primary';
+const CALENDAR_ID = import.meta.env.VITE_GOOGLE_CALENDAR_ID;
 const API_BASE = import.meta.env.VITE_GOOGLE_API_BASE_URL;
 
 export async function fetchEvents(

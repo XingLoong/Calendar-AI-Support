@@ -31,7 +31,7 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 		loading,
 	} = useCalendarEvents(accessToken, handleCalendarRefresh);
 
-	// ✅ Save view + date every time the view changes
+	// Save view + date every time the view changes
 	const handleViewChange = (viewInfo: DatesSetArg) => {
 		const viewType = viewInfo.view.type;
 		const startDate = viewInfo.startStr;
