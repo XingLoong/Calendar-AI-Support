@@ -8,7 +8,9 @@ function getServiceAccountJSON() {
 		return JSON.parse(Buffer.from(raw, 'base64').toString('utf8'));
 	} catch (err) {
 		const error = err as Error;
-		throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT JSON in env', error);
+		throw new Error(
+			'Invalid GOOGLE_SERVICE_ACCOUNT JSON in env' + error.message,
+		);
 	}
 }
 
@@ -64,8 +66,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			function buildEventDateTime(
 				value: string,
 			): calendar_v3.Schema$EventDateTime {
+				// YYYY-MM-DD → all-day
 				if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return { date: value };
-				return { dateTime: value };
+				// Otherwise assume ISO string
+				return { dateTime: value, timeZone: 'Australia/Melbourne' };
 			}
 
 			const eventBody: calendar_v3.Schema$Event = {
@@ -76,6 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 				end: buildEventDateTime(end),
 			};
 
+			console.log('Creating event with payload:', eventBody);
 			const created = await calendar.events.insert({
 				calendarId,
 				requestBody: eventBody,
