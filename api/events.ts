@@ -24,7 +24,7 @@ async function getAuthClient() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-	const calendarId = process.env.VITE_GOOGLE_CALENDAR_ID;
+	const calendarId = process.env.GOOGLE_CALENDAR_ID;
 	if (!calendarId)
 		return res.status(500).json({ error: 'Missing GOOGLE_CALENDAR_ID' });
 
