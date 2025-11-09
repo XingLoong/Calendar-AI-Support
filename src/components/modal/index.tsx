@@ -34,7 +34,6 @@ const Modal: React.FC<ModalProps> = ({
 	const [show, setShow] = useState(false);
 	const [closing, setClosing] = useState(false);
 
-	// handle mount/unmount timing
 	useEffect(() => {
 		if (isOpen) {
 			setShow(true);

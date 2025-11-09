@@ -1,62 +1,55 @@
+import { useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import googleCalendarPlugin from '@fullcalendar/google-calendar';
-import type { DatesSetArg } from '@fullcalendar/core';
+import type { DateClickArg } from '@fullcalendar/interaction';
 import Modal from '../modal';
-import { useCalendarEvents } from './useCalendarEvents';
-import { useRef, useState, useEffect, useCallback } from 'react';
 
-export default function Calendar({ accessToken }: { accessToken: string }) {
-	const calendarRef = useRef<FullCalendar | null>(null);
-	const [calendarKey, setCalendarKey] = useState(0);
-	const [calendarView, setCalendarView] = useState(
-		localStorage.getItem('calendarView') || 'dayGridMonth',
-	);
-	const [calendarDate, setCalendarDate] = useState<string | undefined>(
-		localStorage.getItem('calendarDate') || undefined,
-	);
+export default function Calendar() {
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+	const calendarRef = useRef<FullCalendar>(null);
 
-	const handleCalendarRefresh = useCallback(() => {
-		setCalendarKey((prev) => prev + 1);
-	}, []);
-
-	const {
-		isModalOpen,
-		setIsModalOpen,
-		selectedDateTime,
-		handleDateClick,
-		handleAddEvent,
-		loading,
-	} = useCalendarEvents(accessToken, handleCalendarRefresh);
-
-	// Save view + date every time the view changes
-	const handleViewChange = (viewInfo: DatesSetArg) => {
-		const viewType = viewInfo.view.type;
-		const startDate = viewInfo.startStr;
-
-		setCalendarView(viewType);
-		setCalendarDate(startDate);
-		localStorage.setItem('calendarView', viewType);
-		localStorage.setItem('calendarDate', startDate);
+	const handleDateClick = (event: DateClickArg) => {
+		setSelectedDate(event.date);
+		setIsModalOpen(true);
 	};
 
-	// Auto-refresh events periodically
-	useEffect(() => {
-		const interval = setInterval(() => {
-			console.log('5 min auto-refresh');
-			setCalendarKey((prev) => prev + 1);
-		}, 5 * 60 * 1000);
-		return () => clearInterval(interval);
-	}, []);
+	const handleCloseModal = () => {
+		setIsModalOpen(false);
+		setSelectedDate(null);
+	};
+
+	const handleSubmit = async (formData: CalendarEventInput) => {
+		try {
+			// Call serverless API
+			const response = await fetch('/api/events', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(formData),
+			});
+
+			if (!response.ok) {
+				const err = await response.json();
+				console.error('Error creating event:', err);
+				return;
+			}
+
+			const data = await response.json();
+			console.log('Event created:', data);
+
+			// Optional: refresh events in FullCalendar
+			calendarRef.current?.getApi().refetchEvents();
+		} catch (err) {
+			console.error('Error submitting event:', err);
+		}
+	};
 
 	return (
 		<div className='calendar-app' style={{ width: 800 }}>
-			{loading && <p>Loading calendar events...</p>}
-
 			<FullCalendar
-				key={calendarKey}
 				ref={calendarRef}
 				plugins={[
 					dayGridPlugin,
@@ -70,9 +63,7 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 					center: 'title',
 					right: 'dayGridMonth,timeGridWeek,timeGridDay',
 				}}
-				initialView={calendarView}
-				initialDate={calendarDate}
-				datesSet={handleViewChange}
+				initialView='timeGridWeek'
 				weekends={true}
 				eventSources={[
 					{ googleCalendarId: import.meta.env.VITE_GOOGLE_CALENDAR_ID },
@@ -115,12 +106,11 @@ export default function Calendar({ accessToken }: { accessToken: string }) {
 					}
 				}}
 			/>
-
 			<Modal
 				isOpen={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-				onSubmit={handleAddEvent}
-				defaultDate={selectedDateTime ?? undefined}
+				onClose={handleCloseModal}
+				onSubmit={handleSubmit}
+				defaultDate={selectedDate ?? undefined}
 			/>
 		</div>
 	);
