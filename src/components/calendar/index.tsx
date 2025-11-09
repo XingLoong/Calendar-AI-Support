@@ -49,7 +49,7 @@ export default function Calendar() {
 
 	// fetch events from API
 	const fetchEvents = async (
-		fetchInfo: EventSourceFuncArg,
+		_fetchInfo: EventSourceFuncArg,
 		successCallback: (events: EventInput[]) => void,
 		failureCallback: (error: Error) => void,
 	) => {
