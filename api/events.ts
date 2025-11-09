@@ -90,16 +90,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 			// Helper: build Google EventDateTime
 			function buildEventDateTime(
-				value: string,
+				value: string | Date,
 			): calendar_v3.Schema$EventDateTime {
-				if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return { date: value }; // all-day
-				return { dateTime: value, timeZone: 'Australia/Melbourne' }; // timed
+				let dt: string;
+				if (value instanceof Date) {
+					dt = value.toISOString();
+				} else {
+					dt = new Date(value).toISOString(); // converts "2025-11-13T11:00" → "2025-11-13T11:00:00.000Z"
+				}
+
+				// all-day event?
+				if (/^\d{4}-\d{2}-\d{2}$/.test(value.toString()))
+					return { date: value.toString() };
+
+				return { dateTime: dt, timeZone: 'Australia/Melbourne' };
 			}
 
 			const eventBody: calendar_v3.Schema$Event = {
 				summary,
-				start: buildEventDateTime(startStr),
-				end: buildEventDateTime(endStr),
+				start: buildEventDateTime(start),
+				end: buildEventDateTime(end),
 				...(description && { description }),
 				...(location && { location }),
 			};
