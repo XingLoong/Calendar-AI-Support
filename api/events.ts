@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 		/** GET: list upcoming events */
 		if (req.method === 'GET') {
-			const now = new Date().toISOString();
+			const now = new Date(Date.now() - 1000 * 60).toISOString();
 			const response = await calendar.events.list({
 				calendarId,
 				timeMin: now,
@@ -92,18 +92,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			function buildEventDateTime(
 				value: string | Date,
 			): calendar_v3.Schema$EventDateTime {
-				let dt: string;
-				if (value instanceof Date) {
-					dt = value.toISOString();
-				} else {
-					dt = new Date(value).toISOString(); // converts "2025-11-13T11:00" → "2025-11-13T11:00:00.000Z"
+				// all-day event?
+				if (/^\d{4}-\d{2}-\d{2}$/.test(value.toString())) {
+					return { date: value.toString() };
 				}
 
-				// all-day event?
-				if (/^\d{4}-\d{2}-\d{2}$/.test(value.toString()))
-					return { date: value.toString() };
+				let year, month, day, hour, minute;
 
-				return { dateTime: dt, timeZone: 'Australia/Melbourne' };
+				if (value instanceof Date) {
+					year = value.getFullYear();
+					month = (value.getMonth() + 1).toString().padStart(2, '0');
+					day = value.getDate().toString().padStart(2, '0');
+					hour = value.getHours().toString().padStart(2, '0');
+					minute = value.getMinutes().toString().padStart(2, '0');
+				} else {
+					const d = new Date(value);
+					year = d.getFullYear();
+					month = (d.getMonth() + 1).toString().padStart(2, '0');
+					day = d.getDate().toString().padStart(2, '0');
+					hour = d.getHours().toString().padStart(2, '0');
+					minute = d.getMinutes().toString().padStart(2, '0');
+				}
+
+				const localIso = `${year}-${month}-${day}T${hour}:${minute}:00`;
+				return { dateTime: localIso, timeZone: 'Australia/Melbourne' };
 			}
 
 			const eventBody: calendar_v3.Schema$Event = {
