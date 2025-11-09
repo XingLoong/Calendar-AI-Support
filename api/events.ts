@@ -60,12 +60,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 				return res.status(400).json({ error: 'Missing required fields' });
 			}
 
+			// helper function
+			function buildEventDateTime(
+				value: string,
+			): calendar_v3.Schema$EventDateTime {
+				if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return { date: value };
+				return { dateTime: value };
+			}
+
 			const eventBody: calendar_v3.Schema$Event = {
 				summary,
 				description,
 				location,
-				start: { dateTime: start },
-				end: { dateTime: end },
+				start: buildEventDateTime(start),
+				end: buildEventDateTime(end),
 			};
 
 			const created = await calendar.events.insert({
