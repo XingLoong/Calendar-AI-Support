@@ -3,8 +3,9 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import type { DateClickArg } from '@fullcalendar/interaction';
+import googleCalendarPlugin from '@fullcalendar/google-calendar';
+import type { EventInput, EventSourceFuncArg } from '@fullcalendar/core';
 import Modal from '../modal';
 
 export default function Calendar() {
@@ -24,7 +25,6 @@ export default function Calendar() {
 
 	const handleSubmit = async (formData: CalendarEventInput) => {
 		try {
-			// Call serverless API
 			const response = await fetch('/api/events', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -40,10 +40,26 @@ export default function Calendar() {
 			const data = await response.json();
 			console.log('Event created:', data);
 
-			// Optional: refresh events in FullCalendar
+			// Refresh FullCalendar events
 			calendarRef.current?.getApi().refetchEvents();
 		} catch (err) {
 			console.error('Error submitting event:', err);
+		}
+	};
+
+	// fetch events from API
+	const fetchEvents = async (
+		fetchInfo: EventSourceFuncArg,
+		successCallback: (events: EventInput[]) => void,
+		failureCallback: (error: Error) => void,
+	) => {
+		try {
+			const res = await fetch('/api/events');
+			if (!res.ok) throw new Error('Failed to fetch events');
+			const data = await res.json();
+			successCallback(data.events || []);
+		} catch (err) {
+			failureCallback(err as Error);
 		}
 	};
 
@@ -66,7 +82,7 @@ export default function Calendar() {
 				initialView='timeGridWeek'
 				weekends={true}
 				eventSources={[
-					{ googleCalendarId: import.meta.env.VITE_GOOGLE_CALENDAR_ID },
+					{ events: fetchEvents }, // correctly typed function
 					{
 						googleCalendarId:
 							'en.australian#holiday@group.v.calendar.google.com',
@@ -77,23 +93,11 @@ export default function Calendar() {
 				dayMaxEvents={true}
 				moreLinkClick='popover'
 				businessHours={[
-					{
-						daysOfWeek: [1, 2, 3, 4, 5],
-						startTime: '07:30',
-						endTime: '18:00',
-					},
-					{
-						daysOfWeek: [6],
-						startTime: '08:00',
-						endTime: '17:00',
-					},
+					{ daysOfWeek: [1, 2, 3, 4, 5], startTime: '07:30', endTime: '18:00' },
+					{ daysOfWeek: [6], startTime: '08:00', endTime: '17:00' },
 				]}
 				timeZone='local'
-				eventTimeFormat={{
-					hour: '2-digit',
-					minute: '2-digit',
-					hour12: false,
-				}}
+				eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
 				slotMinTime='06:00:00'
 				slotMaxTime='20:00:00'
 				eventClick={(arg) => {
@@ -101,11 +105,10 @@ export default function Calendar() {
 					arg.jsEvent.preventDefault();
 				}}
 				dateClick={(event) => {
-					if (event.view.type === 'timeGridWeek') {
-						handleDateClick(event);
-					}
+					if (event.view.type === 'timeGridWeek') handleDateClick(event);
 				}}
 			/>
+
 			<Modal
 				isOpen={isModalOpen}
 				onClose={handleCloseModal}
